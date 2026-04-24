@@ -1,0 +1,38 @@
+# Copyright René Ferdinand Rivera Morell
+#
+# Use, modification, and distribution are subject to the
+# Boost Software License, Version 1.0. (See accompanying file LICENSE.txt)
+
+name: "Un-unofficial Build"
+
+on:
+  # Allow manual runs.
+  workflow_dispatch:
+  # And run on pushes, for main and and feature branches.
+  push:
+    branches: ["main", "feature/*"]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - { name: 'x64-glibc-217', version: 'v24.15.0' }
+    runs-on: ubuntu-latest
+    name: ${{ matrix.version }}-${{ matrix.name }}
+
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@main
+        with: { path: "unofficial-builds" }
+
+      - name: "Local Build"
+        run: |
+          cd "${{github.workspace}}/unofficial-builds"
+          bin/local_build.sh -r ${{ matrix.name }} -v ${{ matrix.version }}
+
+      - name: "Upload"
+        uses: actions/upload-artifact@main
+        with:
+          name: nodejs-${{ matrix.version }}-${{ matrix.name }}
+          path: "${{github.workspace}}/staging/release/${{ matrix.version }}/*"
